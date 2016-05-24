@@ -97,10 +97,10 @@ while(cell) {
 }
 
 // update
-function updatePlayer() {
-  playerSphere.position.x = player.getPosition().x;
-  playerSphere.position.y = player.getPosition().y;
-  playerSphere.updateMatrixWorld();
+function updatePlayer(deltaTime) {
+  deltaTime = deltaTime || 1;
+  var destination = new THREE.Vector3(player.getPosition().x, player.getPosition().y, playerSphere.position.z);
+  playerSphere.position.lerp(destination, 0.01 * deltaTime);
 
   camera.position.x = playerSphere.position.x;
   camera.position.y  = playerSphere.position.y;
@@ -138,12 +138,13 @@ window.onkeyup = function (event) {
       console.log('backward');
       break;
   }
-  updatePlayer();
+  // updatePlayer();
   console.log('movements: ' + player.successMovements + '/' + player.movements);
 }
 
 function update(deltaTime) {
   // console.log(player.getPosition());
+  updatePlayer(deltaTime);
 }
 
 // request renderer
