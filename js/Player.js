@@ -5,7 +5,7 @@ function Player(cell) {
   this.successMovements = 0;
 
   function isAllowedToMove(cell) {
-    return cell && cell.getType() != 1;
+    return cell && cell.isEmpty();
   }
 
   this.getPosition = function() {

@@ -1,100 +1,33 @@
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+var camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 1000 );
 
 var renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setSize( window.innerWidth, window.innerHeight - 4);
 document.body.appendChild( renderer.domElement );
 
 
 // adding light
-var light = new THREE.DirectionalLight( 0xffffff, 1 );
-light.position.set( 1, 2, 3 );
-scene.add( light );
+var ambientLight = new THREE.AmbientLight( 0x0a0a0a ); // soft white light
+scene.add( ambientLight );
 
-var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-scene.add( light );
-
-
-// adding box
-
-// fill maze
-var sizeX = 50;
-var sizeY = 50;
-var cell = null, left = null, up = null;
-for (var i = 0; i < sizeY; ++i) {
-  for (var j = 0; j < sizeX; ++j) {
-    cell = new Cell(0, 0);
-    if (left)
-      left.setRight(cell);
-    left = cell;
-    if (up) {
-      up.setUp(cell);
-      up = up.getRight();
-    }
-    cell.setType(1);
-  }
-  left = null;
-  up = cell.getLeftEnd();
-}
-cell = cell.getDownEnd().getLeftEnd();
-
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-
-// select random start & end
-var start = cell.getRight(getRandomInt(1, sizeX - 2));
-var end = cell.getUpEnd().getRight(getRandomInt(1, sizeX - 2));
-start.setType(0);
-end.setType(0);
 
 // generate maze
-var startPos = start.x + sizeX * start.y;
-var endPos = end.x + sizeX * end.y;
-var unionFind = new UnionFind(sizeX * sizeY);
-var stop = sizeX * sizeY;
-do {
-  console.log('progress ' + (sizeX * sizeY - stop) / (sizeX * sizeY));
-  var x, y, toErase;
-
-  do {
-    x = getRandomInt(1, sizeX - 2);
-    y = getRandomInt(1, sizeX - 2);
-    toErase = cell.getRight(x).getUp(y);
-  } while (toErase.getType() == 0);
-
-  toErase.setType(0);
-
-  if (toErase.getUp() && toErase.getUp().getType() == 0)
-    unionFind.union(x + sizeX * y, x + sizeX * (y + 1));
-
-  if (toErase.getRight() && toErase.getRight().getType() == 0)
-    unionFind.union(x + sizeX * y, x + sizeX * y + 1);
-
-  if (toErase.getDown() && toErase.getDown().getType() == 0)
-    unionFind.union(x + sizeX * y, x + sizeX * (y - 1));
-
-  if (toErase.getLeft() && toErase.getLeft().getType() == 0)
-    unionFind.union(x + sizeX * y, x + sizeX * y - 1);
-
-} while(!unionFind.connected(startPos, endPos) && --stop);
+var sizeX = 50;
+var sizeY = 50;
+var mazeCreator = new MazeCreator(sizeX, sizeY);
+mazeCreator.generate();
 
 
-var player = new Player(start);
+// generate and place player
+var player = new Player(mazeCreator.start);
 var playerSphere = placeSphereAt(player.getPosition().x, player.getPosition().y, 0);
 
+var light = new THREE.DirectionalLight( 0xffffff, 0.3 );
+scene.add( light );
+light.target = playerSphere;
 
-// draw maze
-while(cell) {
-  for (var tmp = cell.getLeftEnd(); tmp; tmp = tmp.getRight()) {
-    switch (tmp.getType()) {
-      case 0: break;
-      case 1: placeCubeAt(tmp.x, tmp.y, 0); break;
-    }
-  }
-  cell = cell.getUp();
-}
+var pointLight = new THREE.PointLight(0xffffff, 1, 5);
+scene.add(pointLight);
 
 // update
 function updatePlayer(deltaTime) {
@@ -102,12 +35,16 @@ function updatePlayer(deltaTime) {
   var destination = new THREE.Vector3(player.getPosition().x, player.getPosition().y, playerSphere.position.z);
   playerSphere.position.lerp(destination, 0.01 * deltaTime);
 
+  pointLight.position.copy(playerSphere.position);
+  light.position.copy(playerSphere.position);
+  light.position.z += 1;
+
   camera.position.x = playerSphere.position.x;
   camera.position.y  = playerSphere.position.y;
   camera.position.z = 5;
   camera.lookAt(playerSphere.position);
 
-  if (player.cell == end)
+  if (player.cell == mazeCreator.end)
     console.log('win');
 }
 updatePlayer();
@@ -145,6 +82,7 @@ window.onkeyup = function (event) {
 function update(deltaTime) {
   // console.log(player.getPosition());
   updatePlayer(deltaTime);
+  mazeCreator.draw(deltaTime);
 }
 
 // request renderer
@@ -166,11 +104,11 @@ renderer.render( scene, camera );
 // create and place cube
 function placeCubeAt(x, y, z) {
   var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-  var material = new THREE.MeshLambertMaterial( { color : 0x0000ff } );
+  var material = new THREE.MeshStandardMaterial({
+    color : 0x00C8FF
+  });
   var cube = new THREE.Mesh( geometry, material );
-  cube.position.x = x;
-  cube.position.y = y;
-  cube.position.z = z;
+  cube.position.set(x, y, z);
   scene.add( cube );
   return cube;
 }
@@ -178,11 +116,21 @@ function placeCubeAt(x, y, z) {
 // create and place spere
 function placeSphereAt(x, y, z) {
   var geometry = new THREE.SphereGeometry( 0.5, 32, 32 );
-  var material = new THREE.MeshLambertMaterial( { color : 0x00ff00 } );
+  var material = new THREE.MeshStandardMaterial({ color : 0x49FF00 });
   var sphere = new THREE.Mesh( geometry, material );
-  sphere.position.x = x;
-  sphere.position.y = y;
-  sphere.position.z = z;
+  sphere.position.set(x, y, z);
   scene.add( sphere );
   return sphere;
+}
+
+function placeFloorAt(x, y, z) {
+  var geometry = new THREE.PlaneGeometry( 1, 1 );
+  var material = new THREE.MeshStandardMaterial({ color : 0xb600ff });
+  var plane = new THREE.Mesh( geometry, material );
+  plane.position.set(x, y, z);
+  scene.add( plane );
+}
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

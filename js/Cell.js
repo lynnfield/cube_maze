@@ -98,14 +98,24 @@ function Cell(x, y) {
     cell.setRight(this);
   }
 
-  this.type = 0;
+  this.empty = true;
 
-  this.getType = function() {
-    return this.type;
+  this.isEmpty = function() {
+    return this.empty;
   }
 
-  this.setType = function (val) {
-    this.type = val;
+  this.setEmpty = function(val) {
+    this.empty = val;
+  }
+
+  this.light = false;
+
+  this.hasLight = function() {
+    return this.light;
+  }
+
+  this.setLight = function(val) {
+    this.light = true;
   }
 
   return this;
