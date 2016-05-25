@@ -45,7 +45,7 @@ function updatePlayer(deltaTime) {
   camera.lookAt(playerSphere.position);
 
   if (player.cell == mazeCreator.end)
-    console.log('win');
+    location.reload();
 }
 updatePlayer();
 
@@ -76,7 +76,9 @@ window.onkeyup = function (event) {
       break;
   }
   // updatePlayer();
-  console.log('movements: ' + player.successMovements + '/' + player.movements);
+  var from = new THREE.Vector3(mazeCreator.end.x, mazeCreator.end.y, 0);
+  var to = new THREE.Vector3(player.cell.x, player.cell.y, 0)
+  console.log('distance to end: ' + from.distanceTo(to) + ' movements: ' + player.successMovements + '/' + player.movements);
 }
 
 function update(deltaTime) {
