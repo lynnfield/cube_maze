@@ -14,8 +14,35 @@ scene.add( ambientLight );
 // generate maze
 var sizeX = 50;
 var sizeY = 50;
+
+var params = location.search.replace('?', '');
+params = params.split('&');
+for (var index in params) {
+  var keyval = params[index].split('=');
+  if (keyval[0].includes('sizex')) {
+    var tmp = parseInt(keyval[1]);
+    if (!isNaN(tmp))
+      sizeX = tmp;
+  }
+  if (keyval[0].includes('sizey')) {
+    var tmp = parseInt(keyval[1]);
+    if (!isNaN(tmp))
+      sizeY = tmp;
+  }
+}
+
+console.log('create maze ' + sizeX + 'x' + sizeY);
 var mazeCreator = new MazeCreator(sizeX, sizeY);
 mazeCreator.generate();
+
+if (mazeCreator.percolations > 0.9)
+  console.log('i think this one is easy');
+else if (mazeCreator.percolations > 0.7)
+  console.log('i think this one is normal');
+else if (mazeCreator.percolations > 0.5)
+  console.log('i think this one is hard');
+else
+  console.log('i think this one is impossible');
 
 
 // generate and place player

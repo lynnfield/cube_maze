@@ -4,6 +4,7 @@ function MazeCreator(sizeX, sizeY) {
   this.cell = null;
   this.start = null;
   this.end = null;
+  this.percolations = 0;
   var left = null, up = null;
 
   this.generate = function () {
@@ -65,6 +66,7 @@ function MazeCreator(sizeX, sizeY) {
 
     } while(!unionFind.connected(startPos, endPos) && --stop);
 
+    this.percolations = ((sizeX - 2) * (sizeY - 2) - stop) / ((sizeX - 2) * (sizeY - 2));
     console.log('percolations ' + ((sizeX - 2) * (sizeY - 2) - stop) / ((sizeX - 2) * (sizeY - 2)));
   }
 
