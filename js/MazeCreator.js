@@ -1,6 +1,8 @@
 
 
 function MazeCreator(sizeX, sizeY) {
+  this.sizeX = sizeX;
+  this.sizeY = sizeY;
   this.cell = null;
   this.start = null;
   this.end = null;
@@ -67,6 +69,16 @@ function MazeCreator(sizeX, sizeY) {
     } while(!unionFind.connected(startPos, endPos) && --stop);
 
     this.percolations = ((sizeX - 2) * (sizeY - 2) - stop) / ((sizeX - 2) * (sizeY - 2));
+
+    if (mazeCreator.percolations > 0.9)
+      this.difficulty = 'easy';
+    else if (mazeCreator.percolations > 0.7)
+      this.difficulty = 'normal';
+    else if (mazeCreator.percolations > 0.5)
+      this.difficulty = 'hard';
+    else
+      this.difficulty = 'impossible';
+
     console.log('percolations ' + ((sizeX - 2) * (sizeY - 2) - stop) / ((sizeX - 2) * (sizeY - 2)));
   }
 
@@ -76,52 +88,49 @@ function MazeCreator(sizeX, sizeY) {
 
   var H = 2, W = 2, hDir = 1, wDir = -1, i = 0, j = 0;
 
-  this.draw = function (deltaTime) {
-    time += deltaTime;
+  this.draw = function () {
+    if (!drawCell)
+      drawCell = /*this.start.getRight();*/this.cell.getLeftEnd().getDownEnd();
 
-    if (time > stepTreshold && !isDrawed) {
-      if (!drawCell)
-        drawCell = /*this.start.getRight();*/this.cell.getLeftEnd().getDownEnd();
+    // draw maze
+    if (!drawCell.isEmpty())
+      drawCell.content = placeCubeAt(drawCell.x, drawCell.y, 0);
+    else if (drawCell.hasLight())
+      drawCell.content = placeFloorAt(drawCell.x, drawCell.y, 0);
 
-      // draw maze
-      if (!drawCell.isEmpty())
-        placeCubeAt(drawCell.x, drawCell.y, 0);
-      else if (drawCell.hasLight())
-        placeFloorAt(drawCell.x, drawCell.y, 0);
+    // ++i;
+    //
+    // if (i < H) {
+    //   if (hDir > 0)
+    //     drawCell = drawCell.getUp();
+    //   else
+    //     drawCell = drawCell.getDown();
+    // } else {
+    //   ++j;
+    //
+    //   if (j < W) {
+    //     drawCell = drawCell.getLeft();
+    //   } else {
+    //     drawCell = drawCell.getLeft();
+    //     i = 0;
+    //     j = 0;
+    //
+    //     hDir = hDir > 0 ? -1 : 1;
+    //   }
+    // }
 
-      // ++i;
-      //
-      // if (i < H) {
-      //   if (hDir > 0)
-      //     drawCell = drawCell.getUp();
-      //   else
-      //     drawCell = drawCell.getDown();
-      // } else {
-      //   ++j;
-      //
-      //   if (j < W) {
-      //     drawCell = drawCell.getLeft();
-      //   } else {
-      //     drawCell = drawCell.getLeft();
-      //     i = 0;
-      //     j = 0;
-      //
-      //     hDir = hDir > 0 ? -1 : 1;
-      //   }
-      // }
+    var tmp = drawCell.getRight();
 
-      var tmp = drawCell.getRight();
-
+    if (tmp) {
+      drawCell = tmp;
+      return;
+    } else {
+      tmp = drawCell.getUp();
       if (tmp) {
-        drawCell = tmp;
-        return;
+        drawCell = tmp.getLeftEnd();
       } else {
-        tmp = drawCell.getUp();
-        if (tmp) {
-          drawCell = tmp.getLeftEnd();
-        } else {
-          isDrawed = true;
-        }
+        isDrawed = true;
+        this.draw = function() { return null; };
       }
     }
 

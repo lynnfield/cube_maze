@@ -34,16 +34,8 @@ for (var index in params) {
 console.log('create maze ' + sizeX + 'x' + sizeY);
 var mazeCreator = new MazeCreator(sizeX, sizeY);
 mazeCreator.generate();
-
-if (mazeCreator.percolations > 0.9)
-  console.log('i think this one is easy');
-else if (mazeCreator.percolations > 0.7)
-  console.log('i think this one is normal');
-else if (mazeCreator.percolations > 0.5)
-  console.log('i think this one is hard');
-else
-  console.log('i think this one is impossible');
-
+for (var i = 0; i < 1000; ++ i)
+  mazeCreator.draw();
 
 // generate and place player
 var player = new Player(mazeCreator.start);
@@ -67,7 +59,7 @@ function updatePlayer(deltaTime) {
   light.position.z += 1;
 
   camera.position.x = playerSphere.position.x;
-  camera.position.y  = playerSphere.position.y;
+  camera.position.y = playerSphere.position.y;
   camera.position.z = 5;
   camera.lookAt(playerSphere.position);
 
@@ -102,14 +94,14 @@ window.onkeyup = function (event) {
       console.log('backward');
       break;
   }
+
   // updatePlayer();
   var from = new THREE.Vector3(mazeCreator.end.x, mazeCreator.end.y, 0);
   var to = new THREE.Vector3(player.cell.x, player.cell.y, 0)
-  console.log('distance to end: ' + from.distanceTo(to) + ' movements: ' + player.successMovements + '/' + player.movements);
+  console.log('distance to end: ' + Math.floor(from.distanceTo(to)) + ' movements: ' + player.successMovements + '/' + player.movements);
 }
 
 function update(deltaTime) {
-  // console.log(player.getPosition());
   updatePlayer(deltaTime);
   mazeCreator.draw(deltaTime);
 }
@@ -133,9 +125,7 @@ renderer.render( scene, camera );
 // create and place cube
 function placeCubeAt(x, y, z) {
   var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-  var material = new THREE.MeshStandardMaterial({
-    color : 0x00C8FF
-  });
+  var material = new THREE.MeshStandardMaterial({ color : 0x00C9FF });
   var cube = new THREE.Mesh( geometry, material );
   cube.position.set(x, y, z);
   scene.add( cube );
@@ -157,9 +147,20 @@ function placeFloorAt(x, y, z) {
   var material = new THREE.MeshStandardMaterial({ color : 0xb600ff });
   var plane = new THREE.Mesh( geometry, material );
   plane.position.set(x, y, z);
-  scene.add( plane );
+  scene.add(plane);
+  return plane;
 }
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+function ready() {
+  var sizeView = document.querySelector('#mazeSize');
+  var difficultyView = document.querySelector('#mazeDifficulty');
+
+  sizeView.textContent = 'Size: ' + mazeCreator.sizeX + 'x' + mazeCreator.sizeY;
+  difficultyView.textContent = 'Difficulty: ' + mazeCreator.difficulty + ' (percolations: ' + mazeCreator.percolations.toFixed(3) + ')';
+}
+
+document.addEventListener("DOMContentLoaded", ready);
