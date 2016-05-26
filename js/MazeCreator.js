@@ -1,5 +1,4 @@
 
-
 function MazeCreator(sizeX, sizeY) {
   this.sizeX = sizeX;
   this.sizeY = sizeY;
@@ -80,61 +79,6 @@ function MazeCreator(sizeX, sizeY) {
       this.difficulty = 'impossible';
 
     console.log('percolations ' + ((sizeX - 2) * (sizeY - 2) - stop) / ((sizeX - 2) * (sizeY - 2)));
-  }
-
-  var time = 0;
-  var stepTreshold = 0;
-  var drawCell = null, isDrawed = false;
-
-  var H = 2, W = 2, hDir = 1, wDir = -1, i = 0, j = 0;
-
-  this.draw = function () {
-    if (!drawCell)
-      drawCell = /*this.start.getRight();*/this.cell.getLeftEnd().getDownEnd();
-
-    // draw maze
-    if (!drawCell.isEmpty())
-      drawCell.content = placeCubeAt(drawCell.x, drawCell.y, 0);
-    else if (drawCell.hasLight())
-      drawCell.content = placeFloorAt(drawCell.x, drawCell.y, 0);
-
-    // ++i;
-    //
-    // if (i < H) {
-    //   if (hDir > 0)
-    //     drawCell = drawCell.getUp();
-    //   else
-    //     drawCell = drawCell.getDown();
-    // } else {
-    //   ++j;
-    //
-    //   if (j < W) {
-    //     drawCell = drawCell.getLeft();
-    //   } else {
-    //     drawCell = drawCell.getLeft();
-    //     i = 0;
-    //     j = 0;
-    //
-    //     hDir = hDir > 0 ? -1 : 1;
-    //   }
-    // }
-
-    var tmp = drawCell.getRight();
-
-    if (tmp) {
-      drawCell = tmp;
-      return;
-    } else {
-      tmp = drawCell.getUp();
-      if (tmp) {
-        drawCell = tmp.getLeftEnd();
-      } else {
-        isDrawed = true;
-        this.draw = function() { return null; };
-      }
-    }
-
-    return null;
   }
 
   function getRandomInt(min, max) {

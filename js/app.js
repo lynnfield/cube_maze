@@ -34,8 +34,7 @@ for (var index in params) {
 console.log('create maze ' + sizeX + 'x' + sizeY);
 var mazeCreator = new MazeCreator(sizeX, sizeY);
 mazeCreator.generate();
-for (var i = 0; i < 1000; ++ i)
-  mazeCreator.draw();
+// end generate maze
 
 // generate and place player
 var player = new Player(mazeCreator.start);
@@ -47,6 +46,10 @@ light.target = playerSphere;
 
 var pointLight = new THREE.PointLight(0xffffff, 1, 5);
 scene.add(pointLight);
+
+// draw
+var drawer = new Drawer(scene);
+drawer.draw(player.cell);
 
 // update
 function updatePlayer(deltaTime) {
@@ -95,6 +98,8 @@ window.onkeyup = function (event) {
       break;
   }
 
+  drawer.draw(player.cell);
+
   // updatePlayer();
   var from = new THREE.Vector3(mazeCreator.end.x, mazeCreator.end.y, 0);
   var to = new THREE.Vector3(player.cell.x, player.cell.y, 0)
@@ -103,7 +108,6 @@ window.onkeyup = function (event) {
 
 function update(deltaTime) {
   updatePlayer(deltaTime);
-  mazeCreator.draw(deltaTime);
 }
 
 // request renderer
@@ -124,30 +128,36 @@ renderer.render( scene, camera );
 
 // create and place cube
 function placeCubeAt(x, y, z) {
-  var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-  var material = new THREE.MeshStandardMaterial({ color : 0x00C9FF });
-  var cube = new THREE.Mesh( geometry, material );
+  if (!placeCubeAt.geometry)
+    placeCubeAt.geometry = new THREE.BoxGeometry( 1, 1, 1 );
+  if (!placeCubeAt.material)
+    placeCubeAt.material = new THREE.MeshStandardMaterial({ color : 0x00C9FF });
+  var cube = new THREE.Mesh( placeCubeAt.geometry, placeCubeAt.material );
   cube.position.set(x, y, z);
-  scene.add( cube );
+  // scene.add( cube );
   return cube;
 }
 
 // create and place spere
 function placeSphereAt(x, y, z) {
-  var geometry = new THREE.SphereGeometry( 0.5, 32, 32 );
-  var material = new THREE.MeshStandardMaterial({ color : 0x49FF00 });
-  var sphere = new THREE.Mesh( geometry, material );
+  if (!placeSphereAt.geometry)
+    placeSphereAt.geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
+  if (!placeSphereAt.material)
+    placeSphereAt.material = new THREE.MeshStandardMaterial({ color : 0x49FF00 });
+  var sphere = new THREE.Mesh( placeSphereAt.geometry, placeSphereAt.material );
   sphere.position.set(x, y, z);
   scene.add( sphere );
   return sphere;
 }
 
 function placeFloorAt(x, y, z) {
-  var geometry = new THREE.PlaneGeometry( 1, 1 );
-  var material = new THREE.MeshStandardMaterial({ color : 0xb600ff });
-  var plane = new THREE.Mesh( geometry, material );
+  if (!placeFloorAt.geometry)
+    placeFloorAt.geometry = new THREE.PlaneGeometry( 1, 1 );
+  if (!placeFloorAt.material)
+    placeFloorAt.material = new THREE.MeshStandardMaterial({ color : 0xb600ff });
+  var plane = new THREE.Mesh( placeFloorAt.geometry, placeFloorAt.material );
   plane.position.set(x, y, z);
-  scene.add(plane);
+  // scene.add(plane);
   return plane;
 }
 
