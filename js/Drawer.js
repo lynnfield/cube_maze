@@ -56,8 +56,8 @@ function Drawer(scene) {
   }
 
   this.draw = function (pivot, width, height) {
-    height = height || 6;
-    width = width || (height + 5);
+    height = height || 11;
+    width = width || 11;
 
     resetVisible();
 

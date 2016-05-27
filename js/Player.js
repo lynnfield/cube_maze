@@ -48,5 +48,21 @@ function Player(cell) {
     this.movements++;
   }
 
+  this.rotateRight = function() {
+    var tmp = this.moveUp;
+    this.moveUp = this.moveRight;
+    this.moveRight = this.moveDown;
+    this.moveDown = this.moveLeft;
+    this.moveLeft = tmp;
+  }
+
+  this.rotateLeft = function() {
+    var tmp = this.moveUp;
+    this.moveUp = this.moveLeft;
+    this.moveLeft = this.moveDown;
+    this.moveDown = this.moveRight;
+    this.moveRight = tmp;
+  }
+
   return this;
 }

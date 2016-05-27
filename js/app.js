@@ -39,6 +39,13 @@ mazeCreator.generate();
 // generate and place player
 var player = new Player(mazeCreator.start);
 var playerSphere = placeSphereAt(player.getPosition().x, player.getPosition().y, 0);
+playerSphere.lookAt(
+  playerSphere.position.clone(
+    playerSphere.position.x,
+    playerSphere.position.y,
+    playerSphere.position.z - 1
+  ));
+camera.lookAt(playerSphere.position);
 
 var light = new THREE.DirectionalLight( 0xffffff, 0.3 );
 scene.add( light );
@@ -61,10 +68,11 @@ function updatePlayer(deltaTime) {
   light.position.copy(playerSphere.position);
   light.position.z += 1;
 
+
+  camera.quaternion.slerp(playerSphere.quaternion, 0.02 * deltaTime);
   camera.position.x = playerSphere.position.x;
   camera.position.y = playerSphere.position.y;
   camera.position.z = 5;
-  camera.lookAt(playerSphere.position);
 
   if (player.cell == mazeCreator.end)
     location.reload();
@@ -73,27 +81,28 @@ updatePlayer();
 
 // movement
 window.onkeyup = function (event) {
+  console.log(event.keyCode);
   switch (event.keyCode) {
     case 37:  // left
-      console.log('left');
-      player.moveLeft()
+      // player.moveLeft()
+      player.rotateLeft();
+      playerSphere.rotateOnAxis(playerSphere.getWorldDirection(), Math.PI/2);
       break;
     case 38:  // up
-      console.log('up');
       player.moveUp()
       break;
     case 39:  // right
-      console.log('right')
-      player.moveRight();
+      // player.moveRight();
+      player.rotateRight();
+      playerSphere.rotateOnAxis(playerSphere.getWorldDirection(), -Math.PI/2);
       break;
     case 40:  // down
-      console.log('down');
       player.moveDown();
       break;
-    case 87:  // forward
+    case 87:  // forward 'a'
       console.log('forward');
       break;
-    case 83:  // backward
+    case 83:  // backward 'b'
       console.log('backward');
       break;
   }
