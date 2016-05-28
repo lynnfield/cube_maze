@@ -103,7 +103,7 @@ function updatePlayer(deltaTime) {
   // camera.position.z = playerSphere.position.z + 5;
 
   if (player.cell == mazeCreator.end) {
-    window.location.reload();
+    console.log('win');
     window.location.reload();
   }
 }
