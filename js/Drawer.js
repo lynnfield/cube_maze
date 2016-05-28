@@ -17,17 +17,55 @@ function GrowingPool(objectCreator) {
 }
 
 function Drawer(scene) {
-  var cubePool  = new GrowingPool(function () { return placeCubeAt(0,0,0); });
-  var floorPool = new GrowingPool(function () { return placeFloorAt(0,0,0); });
+  function cubeGenerator() {
+    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    var material = new THREE.MeshStandardMaterial({ color : 0x00C9FF });
+    return function() {
+      return new THREE.Mesh( geometry, material );
+    }
+  }
+
+  function halfVisibleCubeGenerator() {
+    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    var material = new THREE.MeshStandardMaterial({
+      color : 0x00C9FF,
+      transparent : true,
+      opacity : 0.5
+    });
+    return function() {
+      return new THREE.Mesh( geometry, material );
+    }
+  }
+
+  function floorGenerator() {
+    var geometry = new THREE.PlaneGeometry( 1, 1 );
+    var material = new THREE.MeshStandardMaterial({ color : 0xb600ff });
+    return function() {
+      return new THREE.Mesh( geometry, material );
+    }
+  }
+
+  var cubePool  = new GrowingPool(cubeGenerator());
+  var halfVisibleCubePool = new GrowingPool(halfVisibleCubeGenerator());
+  var floorPool = new GrowingPool(floorGenerator());
 
   var drawObjects = [];
 
   function addToVisible(cell) {
-    if (!cell) return;
+    if (!cell || cell.isEmpty()) return;
 
-    var obj = cell.isEmpty() ? floorPool.get() : cubePool.get();
+    var obj = cubePool.get();
 
-    obj.position.set(cell.x, cell.y, 0);
+    obj.position.set(cell.x, cell.y, cell.z);
+    drawObjects.push(obj);
+  }
+
+  function addToHalfVisible(cell) {
+    if (!cell || cell.isEmpty()) return;
+
+    var obj = halfVisibleCubePool.get();
+
+    obj.position.set(cell.x, cell.y, cell.z);
     drawObjects.push(obj);
   }
 
@@ -45,26 +83,58 @@ function Drawer(scene) {
       scene.add.apply(scene, drawObjects);
   }
 
-  function addToVisibleWithNeighbours(cell, radius) {
+  function addToVisibleWithNeighbours(player, cell, radius) {
     if (cell) {
       addToVisible(cell);
       for (var i = 0; i < radius; ++ i) {
-        addToVisible(cell.getUp(i + 1));
-        addToVisible(cell.getDown(i + 1));
+        addToVisible(player.getUp(cell, i + 1));
+        addToVisible(player.getDown(cell, i + 1));
       }
     }
   }
 
-  this.draw = function (pivot, width, height) {
+  function addToHalfVisibleWithNeighbours(player, cell, radius) {
+    if (cell) {
+      addToHalfVisible(cell);
+      for (var i = 0; i < radius; ++ i) {
+        addToHalfVisible(player.getUp(cell, i + 1));
+        addToHalfVisible(player.getDown(cell, i + 1));
+      }
+    }
+  }
+
+  this.draw = function (player, width, height, length) {
     height = height || 11;
     width = width || 11;
+    length = length || 11;
+    var getForward, getLeft, getRigt;
 
     resetVisible();
 
-    addToVisibleWithNeighbours(pivot, height);
+    addToVisibleWithNeighbours(player, player.cell, height);
     for (var i = 0; i < width; ++ i) {
-      addToVisibleWithNeighbours(pivot.getLeft(i + 1), height);
-      addToVisibleWithNeighbours(pivot.getRight(i + 1), height);
+      addToVisibleWithNeighbours(player, player.getLeft(player.cell, i + 1), height);
+      addToVisibleWithNeighbours(player, player.getRight(player.cell, i + 1), height);
+    }
+
+    for (var j = 0; j < length; ++ j) {
+      var item = player.getForward(player.cell, j + 1);
+      if (item) {
+        addToVisibleWithNeighbours(player, item, height);
+        for (var i = 0; i < width; ++ i) {
+          addToVisibleWithNeighbours(player, player.getLeft(item, i + 1), height);
+          addToVisibleWithNeighbours(player, player.getRight(item, i + 1), height);
+        }
+      }
+    }
+
+    var item = player.getBackward(player.cell);
+    if (item) {
+      addToHalfVisibleWithNeighbours(player, item, height);
+      for (var i = 0; i < width; ++ i) {
+        addToHalfVisibleWithNeighbours(player, player.getLeft(item, i + 1), height);
+        addToHalfVisibleWithNeighbours(player, player.getRight(item, i + 1), height);
+      }
     }
 
     drawVisible();

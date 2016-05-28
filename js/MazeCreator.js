@@ -1,73 +1,107 @@
 
-function MazeCreator(sizeX, sizeY) {
+function MazeCreator(sizeX, sizeY, sizeZ) {
   this.sizeX = sizeX;
   this.sizeY = sizeY;
+  this.sizeZ = sizeZ;
+
   this.cell = null;
+
   this.start = null;
   this.end = null;
+
   this.percolations = 0;
-  var left = null, up = null;
 
   this.generate = function () {
+    var left = null, down = null, backward = null;
+
     // fill maze
-    for (var i = 0; i < sizeY; ++i) {
-      for (var j = 0; j < sizeX; ++j) {
-        this.cell = new Cell(0, 0);
-        if (left)
-          left.setRight(this.cell);
+    // generate floor
+    for (var i = 0; i < sizeZ; ++i) {
+      // generate row
+      for (var j = 0; j < sizeY; ++j) {
+        // generate cell
+        for (var k = 0; k < sizeX; ++k) {
+          this.cell = new Cell(0,0,0);
+          if (left)
+            left.setRight(this.cell);
+
           left = this.cell;
-        if (up) {
-          up.setUp(this.cell);
-          up = up.getRight();
+
+          if (down) {
+            down.setUp(this.cell);
+            down = down.getRight();
+          }
+
+          if (backward) {
+            backward.setForward(this.cell);
+            backward = backward.getRight();
+          }
+
+          this.cell.setEmpty(false);
         }
-        this.cell.setEmpty(false);
-        // console.log('generated ' + ((j + i * sizeX) / (sizeX * sizeY)));
+
+        left = null;
+        down = this.cell.getLeftEnd();
+        if (down.getBackward())
+          backward = down.getBackward().getUp();
       }
-      left = null;
-      up = this.cell.getLeftEnd();
+
+      down = null;
+      backward = this.cell.getLeftEnd().getDownEnd();
     }
-    this.cell = this.cell.getDownEnd().getLeftEnd();
+
+    this.cell = this.cell.getDownEnd().getLeftEnd().getBackwardEnd();
 
     // select random start & end
-    this.start = this.cell.getRight(getRandomInt(1, sizeX - 2));
-    this.end = this.cell.getUpEnd().getRight(getRandomInt(1, sizeX - 2));
+    this.start = this.cell.getRight(getRandomInt(0, sizeX - 1));
+    this.end = this.cell.getUpEnd().getForwardEnd().getRight(getRandomInt(0, sizeX - 1));
     this.start.setEmpty(true);
     this.end.setEmpty(true);
 
     // generate maze
-    var startPos = this.start.x + sizeX * this.start.y;
-    var endPos = this.end.x + sizeX * this.end.y;
-    var unionFind = new UnionFind(sizeX * sizeY);
-    var stop = (sizeX - 2) * (sizeY - 2);
+    var startPos
+      = Math.abs(this.start.x)
+      + Math.abs(sizeX * this.start.y)
+      + Math.abs(sizeX * sizeY * this.start.z);
+    var endPos
+      = Math.abs(this.end.x)
+      + Math.abs(sizeX * this.end.y)
+      + Math.abs(sizeX * sizeY * this.end.z);
+    var unionFind = new UnionFind(sizeX * sizeY * sizeZ);
+    var stop = sizeX * sizeY * sizeZ;
     do {
-      // console.log('percolate ' + (sizeX * sizeY - stop) / (sizeX * sizeY));
-      var x, y, lightProb, toErase;
+      var x, y, z, toErase;
 
       do {
-        x = getRandomInt(1, sizeX - 2);
-        y = getRandomInt(1, sizeY - 2);
-        lightProb = Math.random();
-        toErase = this.cell.getRight(x).getUp(y);
+        x = getRandomInt(0, sizeX - 1);
+        y = getRandomInt(0, sizeY - 1);
+        z = getRandomInt(0, sizeZ - 1);
+        toErase = this.cell.getRight(x).getUp(y).getForward(z);
       } while (toErase.isEmpty());
 
       toErase.setEmpty(true);
-      toErase.setLight(lightProb > 0.7);
 
       if (toErase.getUp() && toErase.getUp().isEmpty())
-        unionFind.union(x + sizeX * y, x + sizeX * (y + 1));
+        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * (y + 1) + sizeX * sizeY * z);
 
       if (toErase.getRight() && toErase.getRight().isEmpty())
-        unionFind.union(x + sizeX * y, x + sizeX * y + 1);
+        unionFind.union(x + sizeX * y + sizeX * sizeY * z, (x + 1) + sizeX * y + sizeX * sizeY * z);
 
       if (toErase.getDown() && toErase.getDown().isEmpty())
-        unionFind.union(x + sizeX * y, x + sizeX * (y - 1));
+        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * (y - 1) + sizeX * sizeY * z);
 
       if (toErase.getLeft() && toErase.getLeft().isEmpty())
-        unionFind.union(x + sizeX * y, x + sizeX * y - 1);
+        unionFind.union(x + sizeX * y + sizeX * sizeY * z, (x - 1) + sizeX * y + sizeX * sizeY * z);
+
+      if (toErase.getForward() && toErase.getForward().isEmpty())
+        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * y + sizeX * sizeY * (z + 1));
+
+      if (toErase.getBackward() && toErase.getBackward().isEmpty())
+        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * y + sizeX * sizeY * (z - 1));
 
     } while(!unionFind.connected(startPos, endPos) && --stop);
 
-    this.percolations = ((sizeX - 2) * (sizeY - 2) - stop) / ((sizeX - 2) * (sizeY - 2));
+    this.percolations = (sizeX * sizeY * sizeZ - stop) / (sizeX * sizeY * sizeZ);
 
     if (mazeCreator.percolations > 0.9)
       this.difficulty = 'easy';
@@ -78,7 +112,7 @@ function MazeCreator(sizeX, sizeY) {
     else
       this.difficulty = 'impossible';
 
-    console.log('percolations ' + ((sizeX - 2) * (sizeY - 2) - stop) / ((sizeX - 2) * (sizeY - 2)));
+    console.log('percolations ' + (sizeX * sizeY * sizeZ - stop) / (sizeX * sizeY * sizeZ));
   }
 
   function getRandomInt(min, max) {

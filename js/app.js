@@ -12,8 +12,9 @@ scene.add( ambientLight );
 
 
 // generate maze
-var sizeX = 50;
-var sizeY = 50;
+var sizeX = 5;
+var sizeY = 5;
+var sizeZ = 5;
 
 var params = location.search.replace('?', '');
 params = params.split('&');
@@ -29,90 +30,125 @@ for (var index in params) {
     if (!isNaN(tmp))
       sizeY = tmp;
   }
+  if (keyval[0].includes('sizez')) {
+    var tmp = parseInt(keyval[1]);
+    if (!isNaN(tmp))
+      sizeZ = tmp;
+  }
 }
 
-console.log('create maze ' + sizeX + 'x' + sizeY);
-var mazeCreator = new MazeCreator(sizeX, sizeY);
+console.log('create maze ' + sizeX + 'x' + sizeY + 'x' + sizeZ);
+var mazeCreator = new MazeCreator(sizeX, sizeY, sizeZ);
 mazeCreator.generate();
+
+var startMesh = new THREE.Mesh(
+  new THREE.BoxGeometry( 1, 1, 1 ),
+  new THREE.MeshStandardMaterial({
+    color : 0x49FF00,
+    transparent : true,
+    opacity : 0.5
+  }));
+var endMesh = new THREE.Mesh(
+  new THREE.BoxGeometry( 1, 1, 1 ),
+  new THREE.MeshStandardMaterial({
+    color : 0xFF3600,
+    transparent : true,
+    opacity : 0.5
+  }));
+startMesh.position.set(mazeCreator.start.x, mazeCreator.start.y, mazeCreator.start.z);
+endMesh.position.set(mazeCreator.end.x, mazeCreator.end.y, mazeCreator.end.z);
+scene.add(startMesh, endMesh);
 // end generate maze
+
+
+var light = new THREE.DirectionalLight( 0xffffff, 0.3 );
+// scene.add( light );
+
+var pointLight = new THREE.PointLight(0xffffff, 1, 5);
+// scene.add(pointLight);
 
 // generate and place player
 var player = new Player(mazeCreator.start);
-var playerSphere = placeSphereAt(player.getPosition().x, player.getPosition().y, 0);
-playerSphere.lookAt(
-  playerSphere.position.clone(
-    playerSphere.position.x,
-    playerSphere.position.y,
-    playerSphere.position.z - 1
-  ));
-camera.lookAt(playerSphere.position);
+var playerSphere = placeSphereAt(player.getPosition().x, player.getPosition().y, player.getPosition().z);
+// camera.position.set(0,0,0);
+playerSphere.add(camera, light, pointLight);
 
-var light = new THREE.DirectionalLight( 0xffffff, 0.3 );
-scene.add( light );
 light.target = playerSphere;
+light.translateZ(2);
+camera.translateZ(5);
 
-var pointLight = new THREE.PointLight(0xffffff, 1, 5);
-scene.add(pointLight);
+// playerSphere.rotateOnAxis(playerSphere.up, Math.PI);
 
 // draw
 var drawer = new Drawer(scene);
-drawer.draw(player.cell);
+drawer.draw(player);
+
+var targetRotation = new THREE.Object3D();
 
 // update
 function updatePlayer(deltaTime) {
   deltaTime = deltaTime || 1;
-  var destination = new THREE.Vector3(player.getPosition().x, player.getPosition().y, playerSphere.position.z);
+  var destination = new THREE.Vector3(player.getPosition().x, player.getPosition().y, player.getPosition().z);
   playerSphere.position.lerp(destination, 0.01 * deltaTime);
+  playerSphere.quaternion.slerp(targetRotation.quaternion, 0.01 * deltaTime);
 
-  pointLight.position.copy(playerSphere.position);
-  light.position.copy(playerSphere.position);
-  light.position.z += 1;
+  // pointLight.position.copy(playerSphere.position);
+  // light.position.copy(playerSphere.position);
+  // light.position.z += 1;
 
-
-  camera.quaternion.slerp(playerSphere.quaternion, 0.02 * deltaTime);
-  camera.position.x = playerSphere.position.x;
-  camera.position.y = playerSphere.position.y;
-  camera.position.z = 5;
+  // camera.position.copy(playerSphere.position);
+  // camera.quaternion.slerp(playerSphere.quaternion, 0.02 * deltaTime);
+  // camera.position.x = playerSphere.position.x;
+  // camera.position.y = playerSphere.position.y;
+  // camera.position.z = playerSphere.position.z + 5;
 
   if (player.cell == mazeCreator.end)
     location.reload();
 }
 updatePlayer();
 
+var xAxis = new THREE.Vector3(1,0,0);
+var zAxis = new THREE.Vector3(0,0,1);
+
 // movement
 window.onkeyup = function (event) {
-  console.log(event.keyCode);
   switch (event.keyCode) {
     case 37:  // left
-      // player.moveLeft()
       player.rotateLeft();
-      playerSphere.rotateOnAxis(playerSphere.getWorldDirection(), Math.PI/2);
+      targetRotation.rotateOnAxis(zAxis, Math.PI/2);
+      // playerSphere.rotateOnAxis(zAxis, Math.PI/2);
       break;
     case 38:  // up
       player.moveUp()
       break;
     case 39:  // right
-      // player.moveRight();
       player.rotateRight();
-      playerSphere.rotateOnAxis(playerSphere.getWorldDirection(), -Math.PI/2);
+      targetRotation.rotateOnAxis(zAxis, -Math.PI/2);
+      // playerSphere.rotateOnAxis(zAxis, -Math.PI/2);
       break;
     case 40:  // down
       player.moveDown();
       break;
     case 87:  // forward 'a'
-      console.log('forward');
+      player.rotateForward();
+      targetRotation.rotateOnAxis(xAxis, -Math.PI/2);
+      // playerSphere.rotateOnAxis(xAxis, -Math.PI/2);
       break;
     case 83:  // backward 'b'
-      console.log('backward');
+      player.rotateBackward();
+      targetRotation.rotateOnAxis(xAxis, Math.PI/2);
+      // playerSphere.rotateOnAxis(xAxis, Math.PI/2);
       break;
   }
 
-  drawer.draw(player.cell);
+  drawer.draw(player);
 
   // updatePlayer();
-  var from = new THREE.Vector3(mazeCreator.end.x, mazeCreator.end.y, 0);
-  var to = new THREE.Vector3(player.cell.x, player.cell.y, 0)
+  var from = new THREE.Vector3(mazeCreator.end.x, mazeCreator.end.y, mazeCreator.end.z);
+  var to = new THREE.Vector3(player.cell.x, player.cell.y, player.cell.z)
   console.log('distance to end: ' + Math.floor(from.distanceTo(to)) + ' movements: ' + player.successMovements + '/' + player.movements);
+
+  document.querySelector('#distanceToEnd').textContent = 'Distance to end: ' + Math.floor(from.distanceTo(to));
 }
 
 function update(deltaTime) {
@@ -135,18 +171,6 @@ render(0);
 
 renderer.render( scene, camera );
 
-// create and place cube
-function placeCubeAt(x, y, z) {
-  if (!placeCubeAt.geometry)
-    placeCubeAt.geometry = new THREE.BoxGeometry( 1, 1, 1 );
-  if (!placeCubeAt.material)
-    placeCubeAt.material = new THREE.MeshStandardMaterial({ color : 0x00C9FF });
-  var cube = new THREE.Mesh( placeCubeAt.geometry, placeCubeAt.material );
-  cube.position.set(x, y, z);
-  // scene.add( cube );
-  return cube;
-}
-
 // create and place spere
 function placeSphereAt(x, y, z) {
   if (!placeSphereAt.geometry)
@@ -159,27 +183,15 @@ function placeSphereAt(x, y, z) {
   return sphere;
 }
 
-function placeFloorAt(x, y, z) {
-  if (!placeFloorAt.geometry)
-    placeFloorAt.geometry = new THREE.PlaneGeometry( 1, 1 );
-  if (!placeFloorAt.material)
-    placeFloorAt.material = new THREE.MeshStandardMaterial({ color : 0xb600ff });
-  var plane = new THREE.Mesh( placeFloorAt.geometry, placeFloorAt.material );
-  plane.position.set(x, y, z);
-  // scene.add(plane);
-  return plane;
-}
-
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function ready() {
   var sizeView = document.querySelector('#mazeSize');
-  var difficultyView = document.querySelector('#mazeDifficulty');
 
-  sizeView.textContent = 'Size: ' + mazeCreator.sizeX + 'x' + mazeCreator.sizeY;
-  difficultyView.textContent = 'Difficulty: ' + mazeCreator.difficulty + ' (percolations: ' + mazeCreator.percolations.toFixed(3) + ')';
+  sizeView.textContent = 'Size: ' + mazeCreator.sizeX + 'x' + mazeCreator.sizeY + 'x' + mazeCreator.sizeZ;
+  // difficultyView.textContent = 'Difficulty: ' + mazeCreator.difficulty + ' (percolations: ' + mazeCreator.percolations.toFixed(3) + ')';
 }
 
 document.addEventListener("DOMContentLoaded", ready);
