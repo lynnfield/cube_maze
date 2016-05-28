@@ -102,8 +102,10 @@ function updatePlayer(deltaTime) {
   // camera.position.y = playerSphere.position.y;
   // camera.position.z = playerSphere.position.z + 5;
 
-  if (player.cell == mazeCreator.end)
-    location.reload();
+  if (player.cell == mazeCreator.end) {
+    window.location.reload();
+    window.location.reload();
+  }
 }
 updatePlayer();
 
@@ -145,7 +147,7 @@ window.onkeyup = function (event) {
 
   // updatePlayer();
   var from = new THREE.Vector3(mazeCreator.end.x, mazeCreator.end.y, mazeCreator.end.z);
-  var to = new THREE.Vector3(player.cell.x, player.cell.y, player.cell.z)
+  var to = new THREE.Vector3(player.cell.x, player.cell.y, player.cell.z);
   console.log('distance to end: ' + Math.floor(from.distanceTo(to)) + ' movements: ' + player.successMovements + '/' + player.movements);
 
   document.querySelector('#distanceToEnd').textContent = 'Distance to end: ' + Math.floor(from.distanceTo(to));
