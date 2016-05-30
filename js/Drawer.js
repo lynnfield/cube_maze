@@ -17,9 +17,21 @@ function GrowingPool(objectCreator) {
 }
 
 function Drawer(scene) {
+  var loader = new THREE.CubeTextureLoader();
+  loader.setPath( 'textures/cube/' );
+
+  var textureCube = loader.load( [
+  	'x.png', 'x.png',
+  	'y.png', 'y.png',
+  	'z.png', 'z.png'
+  ] );
+
   function cubeGenerator() {
     var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    var material = new THREE.MeshStandardMaterial({ color : 0x00C9FF });
+    var material = new THREE.MeshStandardMaterial({
+      color : 0xffffff,
+      envMap : textureCube
+    });
     return function() {
       return new THREE.Mesh( geometry, material );
     }
@@ -28,9 +40,10 @@ function Drawer(scene) {
   function halfVisibleCubeGenerator() {
     var geometry = new THREE.BoxGeometry( 1, 1, 1 );
     var material = new THREE.MeshStandardMaterial({
-      color : 0x00C9FF,
+      color : 0xffffff,
       transparent : true,
-      opacity : 0.5
+      opacity : 0.5,
+      envMap : textureCube
     });
     return function() {
       return new THREE.Mesh( geometry, material );
