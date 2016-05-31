@@ -67,10 +67,11 @@ function MazeCreator(sizeX, sizeY, sizeZ) {
       = Math.abs(this.end.x)
       + Math.abs(sizeX * this.end.y)
       + Math.abs(sizeX * sizeY * this.end.z);
-    var unionFind = new UnionFind(sizeX * sizeY * sizeZ);
-    var stop = sizeX * sizeY * sizeZ;
+    var size = sizeX * sizeY * sizeZ;
+    var objectLeft = size;
+    var unionFind = new UnionFind(size);
     do {
-      var x, y, z, toErase;
+      var x, y, z, toErase, position;
 
       do {
         x = getRandomInt(0, sizeX - 1);
@@ -81,27 +82,29 @@ function MazeCreator(sizeX, sizeY, sizeZ) {
 
       toErase.setEmpty(true);
 
+      position = x + sizeX * y + sizeX * sizeY * z;
+
       if (toErase.getUp() && toErase.getUp().isEmpty())
-        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * (y + 1) + sizeX * sizeY * z);
+        unionFind.union(position, x + sizeX * (y + 1) + sizeX * sizeY * z);
 
       if (toErase.getRight() && toErase.getRight().isEmpty())
-        unionFind.union(x + sizeX * y + sizeX * sizeY * z, (x + 1) + sizeX * y + sizeX * sizeY * z);
+        unionFind.union(position, (x + 1) + sizeX * y + sizeX * sizeY * z);
 
       if (toErase.getDown() && toErase.getDown().isEmpty())
-        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * (y - 1) + sizeX * sizeY * z);
+        unionFind.union(position, x + sizeX * (y - 1) + sizeX * sizeY * z);
 
       if (toErase.getLeft() && toErase.getLeft().isEmpty())
-        unionFind.union(x + sizeX * y + sizeX * sizeY * z, (x - 1) + sizeX * y + sizeX * sizeY * z);
+        unionFind.union(position, (x - 1) + sizeX * y + sizeX * sizeY * z);
 
       if (toErase.getForward() && toErase.getForward().isEmpty())
-        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * y + sizeX * sizeY * (z + 1));
+        unionFind.union(position, x + sizeX * y + sizeX * sizeY * (z + 1));
 
       if (toErase.getBackward() && toErase.getBackward().isEmpty())
-        unionFind.union(x + sizeX * y + sizeX * sizeY * z, x + sizeX * y + sizeX * sizeY * (z - 1));
+        unionFind.union(position, x + sizeX * y + sizeX * sizeY * (z - 1));
 
-    } while(!unionFind.connected(startPos, endPos) && --stop);
+    } while(!unionFind.connected(startPos, endPos) && --objectLeft);
 
-    this.percolations = (sizeX * sizeY * sizeZ - stop) / (sizeX * sizeY * sizeZ);
+    this.percolations = (size - objectLeft) / (size);
 
     if (mazeCreator.percolations > 0.9)
       this.difficulty = 'easy';
@@ -112,8 +115,8 @@ function MazeCreator(sizeX, sizeY, sizeZ) {
     else
       this.difficulty = 'impossible';
 
-    console.log('percolations ' + (sizeX * sizeY * sizeZ - stop) / (sizeX * sizeY * sizeZ));
-  }
+    console.log('percolations ' + this.percolations);
+  };
 
   function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

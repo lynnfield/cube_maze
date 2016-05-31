@@ -8,17 +8,17 @@ function UnionFind(size) {
     this.sizes[i] = 1;
   }
 
-  function root(parent) {
+  this.root = function(parent) {
     while(parent != this.id[parent]) {
       this.id[parent] = this.id[this.id[parent]];
       parent = this.id[parent];
     }
     return parent;
-  }
+  };
 
   this.union = function (p, q) {
-    var pRoot = root.call(this, p);
-    var qRoot = root.call(this, q);
+    var pRoot = this.root(p);
+    var qRoot = this.root(q);
 
     if (pRoot == qRoot) return;
 
@@ -29,9 +29,9 @@ function UnionFind(size) {
       this.id[qRoot] = pRoot;
       this.sizes[pRoot] += this.sizes[qRoot];
     }
-  }
+  };
 
   this.connected = function (p, q) {
-    return root.call(this, p) == root.call(this, q);
+    return this.root(p) == this.root(q);
   }
 }
