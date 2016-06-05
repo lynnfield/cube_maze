@@ -70,13 +70,25 @@ var targetRotation = new THREE.Object3D();
 
 // update
 var reloading = false;
+function lerp(from, to, delta) {
+    if (Math.abs(from.distanceTo(to)) > 0.01)
+        from.lerp(to, delta);
+    else
+        from.copy(to);
+}
+function slerp(from, to, delta) {
+    from.slerp(to, delta);
+}
 function updatePlayer(deltaTime) {
     deltaTime = deltaTime || 1;
-    playerSphere.position.lerp(player.getPosition(), 0.01 * deltaTime);
-    playerSphere.quaternion.slerp(targetRotation.quaternion, 0.01 * deltaTime);
 
-    camera.position.lerp(currentCameraPosition.position, 0.01 * deltaTime);
-    camera.quaternion.slerp(currentCameraPosition.quaternion, 0.01 * deltaTime);
+    var step = 0.01 * deltaTime;
+
+    lerp(playerSphere.position, player.getPosition(), step);
+    slerp(playerSphere.quaternion, targetRotation.quaternion, step);
+
+    lerp(camera.position, currentCameraPosition.position, step);
+    slerp(camera.quaternion, currentCameraPosition.quaternion, step);
 
     if (player.cell == mazeCreator.end) {
         if (!reloading) {
