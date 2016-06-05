@@ -1,7 +1,5 @@
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-var xAxis = new THREE.Vector3(1, 0, 0);
-var zAxis = new THREE.Vector3(0, 0, 1);
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight - 4);
@@ -60,7 +58,7 @@ light.target = playerSphere;
 light.translateZ(2);
 
 // configure camera
-firstPersonViewCameraPosition.rotateOnAxis(xAxis, Math.PI / 2);
+firstPersonViewCameraPosition.rotateX(Math.PI / 2);
 thirdPersonViewCameraPosition.translateZ(5);
 var currentCameraPosition = thirdPersonViewCameraPosition;
 
@@ -91,37 +89,60 @@ function updatePlayer(deltaTime) {
 updatePlayer();
 
 // movement
+function onRotateBackward() {
+    player.rotateBackward();
+    targetRotation.rotateX(Math.PI / 2);
+    drawer.draw(player);
+}
+function onRotateForward() {
+    player.rotateForward();
+    targetRotation.rotateX(-Math.PI / 2);
+    drawer.draw(player);
+}
+function onRotateLeft() {
+    player.rotateLeft();
+    targetRotation.rotateZ(Math.PI / 2);
+    drawer.draw(player);
+}
+function onRotateRight() {
+    player.rotateRight();
+    targetRotation.rotateZ(-Math.PI / 2);
+    drawer.draw(player);
+}
+function onMoveUp() {
+    player.moveUp();
+    drawer.draw(player);
+}
 addEventListener('keyup', function (event) {
     switch (event.keyCode) {
         case 37:  // left
-            player.rotateLeft();
-            targetRotation.rotateOnAxis(zAxis, Math.PI / 2);
+            onRotateLeft();
             break;
         case 38:  // up
-            player.moveUp();
+            onMoveUp();
             break;
         case 39:  // right
-            player.rotateRight();
-            targetRotation.rotateOnAxis(zAxis, -Math.PI / 2);
+            onRotateRight();
             break;
         case 40:  // down
             player.moveDown();
+            drawer.draw(player);
             break;
         case 87:  // forward 'w'
-            player.rotateForward();
-            targetRotation.rotateOnAxis(xAxis, -Math.PI / 2);
+            onRotateForward();
             break;
         case 83:  // backward 's'
-            player.rotateBackward();
-            targetRotation.rotateOnAxis(xAxis, Math.PI / 2);
+            onRotateBackward();
             break;
         case 65: // roll left 'a'
             player.rollLeft();
-            targetRotation.rotateOnAxis(targetRotation.up, -Math.PI / 2);
+            targetRotation.rotateY(-Math.PI / 2);
+            drawer.draw(player);
             break;
         case 68: // roll right 'd'
             player.rollRight();
-            targetRotation.rotateOnAxis(targetRotation.up, Math.PI / 2);
+            targetRotation.rotateY(Math.PI / 2);
+            drawer.draw(player);
             break;
         case 67: // camera 'c'
             if (currentCameraPosition == firstPersonViewCameraPosition)
@@ -130,8 +151,6 @@ addEventListener('keyup', function (event) {
                 currentCameraPosition = firstPersonViewCameraPosition;
             break;
     }
-
-    drawer.draw(player);
 
     var from = mazeCreator.end;
     var to = player.cell;
@@ -149,17 +168,49 @@ addEventListener('mousedown', function (e) {
 
 addEventListener('mousemove', function (e) {
     inDragMode = e.buttons == 1 && e.button == 0;
+    // if (inDragMode) {
+    //     var x = e.x - downPosition.x;
+    //     var z = e.y - downPosition.y;
+    //     console.log('('+x+';'+z+')');
+    // }
+});
+
+addEventListener('mouseup', function(e) {
     if (inDragMode) {
-        console.log((e.x - downPosition.x) + ' ' + (e.y - downPosition.y));
+        var x = e.x - downPosition.x;
+        var y = e.y - downPosition.y;
+
+        if (Math.abs(x) > Math.abs(y)) {
+            if (x > 0)
+                onRotateLeft();
+            else
+                onRotateRight();
+        } else {
+            if (y > 0)
+                onRotateForward();
+            else
+                onRotateBackward();
+        }
     }
 });
 
-addEventListener('mouseclick', function () {
+addEventListener('click', function () {
     if (!inDragMode)
-        player.moveUp();
+        onMoveUp();
 });
 
 
+// resize window
+window.addEventListener( 'resize', onWindowResize, false );
+
+function onWindowResize(){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight - 4 );
+}
+
+// update
 function update(deltaTime) {
     updatePlayer(deltaTime);
 }
