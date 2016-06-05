@@ -173,21 +173,14 @@ addEventListener('keyup', function (event) {
 var inDragMode = false;
 var downPosition = {x: 0, y: 0};
 
-addEventListener('mousedown', function (e) {
+function onPressed(e) {
     downPosition.x = e.x;
     downPosition.y = e.y;
-});
-
-addEventListener('mousemove', function (e) {
+}
+function onDragged(e) {
     inDragMode = e.buttons == 1 && e.button == 0;
-    // if (inDragMode) {
-    //     var x = e.x - downPosition.x;
-    //     var z = e.y - downPosition.y;
-    //     console.log('('+x+';'+z+')');
-    // }
-});
-
-addEventListener('mouseup', function(e) {
+}
+function onReleased(e) {
     if (inDragMode) {
         var x = e.x - downPosition.x;
         var y = e.y - downPosition.y;
@@ -203,13 +196,18 @@ addEventListener('mouseup', function(e) {
             else
                 onRotateBackward();
         }
-    }
-});
-
-addEventListener('click', function () {
-    if (!inDragMode)
+    } else
         onMoveUp();
-});
+}
+
+// mouse listeners
+addEventListener('mousedown', onPressed);
+addEventListener('mousemove', onDragged);
+addEventListener('mouseup', onReleased);
+// touch listener
+addEventListener('touchstart', onPressed);
+addEventListener('touchmove', onDragged);
+addEventListener('touchend', onReleased);
 
 
 // resize window
